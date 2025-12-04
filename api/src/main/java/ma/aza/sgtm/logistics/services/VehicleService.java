@@ -1,7 +1,11 @@
 package ma.aza.sgtm.logistics.services;
 
 import lombok.RequiredArgsConstructor;
+import ma.aza.sgtm.logistics.dtos.VehicleCreateDto;
+import ma.aza.sgtm.logistics.dtos.VehicleDto;
+import ma.aza.sgtm.logistics.dtos.VehicleUpdateDto;
 import ma.aza.sgtm.logistics.entities.Vehicle;
+import ma.aza.sgtm.logistics.mappers.VehicleMapper;
 import ma.aza.sgtm.logistics.repositories.VehicleRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -15,27 +19,29 @@ import java.util.List;
 public class VehicleService {
 
     private final VehicleRepository vehicleRepository;
+    private final VehicleMapper mapper;
 
-    public Vehicle create(Vehicle vehicle) {
-        return vehicleRepository.save(vehicle);
+    public VehicleDto create(VehicleCreateDto vehicle) {
+        Vehicle entity = mapper.toEntity(vehicle);
+        return mapper.toDto(vehicleRepository.save(entity));
     }
 
-    public Vehicle update(Long id, Vehicle vehicle) {
+    public VehicleDto update(Long id, VehicleUpdateDto vehicle) {
         Vehicle existingVehicle = vehicleRepository.findById(id).orElseThrow();
-        // TODO : use mapper to update existing vehicle fields
-        return vehicleRepository.save(vehicle);
+        mapper.updateFromDto(vehicle, existingVehicle);
+        return mapper.toDto(vehicleRepository.save(existingVehicle));
     }
 
-    public Vehicle getById(Long id) {
-        return vehicleRepository.findById(id).orElseThrow();
+    public VehicleDto getById(Long id) {
+        return mapper.toDto(vehicleRepository.findById(id).orElseThrow());
     }
 
-    public List<Vehicle> getAll() {
-        return vehicleRepository.findAll();
+    public List<VehicleDto> getAll() {
+        return mapper.toDtoList(vehicleRepository.findAll());
     }
 
-    public Page<Vehicle> search(Specification<Vehicle> specification, Pageable pageable) {
-        return vehicleRepository.findAll(specification, pageable);
+    public Page<VehicleDto> search(Specification<Vehicle> specification, Pageable pageable) {
+        return vehicleRepository.findAll(specification, pageable).map(mapper::toDto);
     }
 
     public void delete(Long id) {
