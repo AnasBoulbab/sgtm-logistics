@@ -1,0 +1,50 @@
+version: "3.9"
+
+name: sgtm-cloud
+
+networks:
+  app_net:
+    driver: bridge
+
+volumes:
+  pg_data:
+
+services:
+  db:
+    image: ${DOCKER__POSTGRES_IMAGE}
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DOCKER__POSTGRES_USER}
+      POSTGRES_PASSWORD: ${DOCKER__POSTGRES_PASSWORD}
+      POSTGRES_DB: ${DOCKER__POSTGRES_DB}
+    ports:
+      - "${DOCKER__POSTGRES_EXTERNAL_PORT}:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    networks: [app_net]
+
+  api:
+    image: ${DOCKER__API_IMAGE}
+    restart: unless-stopped
+    depends_on:
+      - db
+      - mqtt-broker
+    env_file:
+      - ./.env
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+    ports:
+      - "${DOCKER__API_EXTERNAL_PORT}:${API__SERVER_PORT}"
+    networks: [app_net]
+
+  web:
+    image: ${DOCKER__WEB_IMAGE}
+    restart: unless-stopped
+    depends_on:
+      - api
+    env_file:
+      - ./.env
+    ports:
+      - "${DOCKER__WEB_EXTERNAL_PORT}:3000"
+    networks: [app_net]

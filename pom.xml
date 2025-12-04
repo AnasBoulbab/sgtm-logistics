@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.5.0</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>ma.aza.sgtm.logistics</groupId>
+    <artifactId>sgtm-logistics</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <name>SGTM Logistics</name>
+    <description>SGTM Logistics System</description>
+
+    <properties>
+        <java.version>17</java.version>
+        <mapstruct.version>1.5.5.Final</mapstruct.version>
+        <springdoc.version>2.8.9</springdoc.version>
+        <flyway.version>11.11.1</flyway.version>
+        <postgresql.version>42.7.4</postgresql.version>
+        <paho.version>1.2.5</paho.version>
+        <spring-integration-mqtt.version>5.5.20</spring-integration-mqtt.version>
+        <spring-cloud.version>2025.0.0</spring-cloud.version>
+        <lombok.version>1.18.30</lombok.version>
+        <lombok-mapstruct-binding.version>0.2.0</lombok-mapstruct-binding.version>
+        <maven-enforcer-plugin.version>3.4.1</maven-enforcer-plugin.version>
+        <hibernate-validator.version>8.0.1.Final</hibernate-validator.version>
+        <jackson-annotations.version>2.19.2</jackson-annotations.version>
+        <h2-database.version>2.4.240</h2-database.version>
+    </properties>
+
+    <modules>
+        <module>api</module>
+    </modules>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- Internal Modules -->
+            <dependency>
+                <groupId>ma.aza.sgtm.logistics</groupId>
+                <artifactId>api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+
+            <!-- Third-party Dependencies with Versions -->
+            <dependency>
+                <groupId>org.mapstruct</groupId>
+                <artifactId>mapstruct</artifactId>
+                <version>${mapstruct.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.mapstruct</groupId>
+                <artifactId>mapstruct-processor</artifactId>
+                <version>${mapstruct.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+                <version>${lombok.version}</version>
+                <scope>provided</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok-mapstruct-binding</artifactId>
+                <version>${lombok-mapstruct-binding.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+                <version>${springdoc.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.flywaydb</groupId>
+                <artifactId>flyway-core</artifactId>
+                <version>${flyway.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.flywaydb</groupId>
+                <artifactId>flyway-database-postgresql</artifactId>
+                <version>${flyway.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.postgresql</groupId>
+                <artifactId>postgresql</artifactId>
+                <version>${postgresql.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.paho</groupId>
+                <artifactId>org.eclipse.paho.client.mqttv3</artifactId>
+                <version>${paho.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.integration</groupId>
+                <artifactId>spring-integration-mqtt</artifactId>
+                <version>${spring-integration-mqtt.version}</version>
+            </dependency>
+
+            <!-- Add Hibernate Validator -->
+            <dependency>
+                <groupId>org.hibernate.validator</groupId>
+                <artifactId>hibernate-validator</artifactId>
+                <version>${hibernate-validator.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.hibernate.validator</groupId>
+                <artifactId>hibernate-validator-annotation-processor</artifactId>
+                <version>${hibernate-validator.version}</version>
+            </dependency>
+
+            <!-- Spring Cloud Dependencies -->
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-annotations</artifactId>
+                <version>${jackson-annotations.version}</version>
+                <scope>compile</scope>
+            </dependency>
+
+            <dependency>
+                <groupId>com.h2database</groupId>
+                <artifactId>h2</artifactId>
+                <version>${h2-database.version}</version>
+                <scope>runtime</scope>
+            </dependency>
+
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-maven-plugin</artifactId>
+                    <configuration>
+                        <excludes>
+                            <exclude>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>
+                            </exclude>
+                        </excludes>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <configuration>
+                        <annotationProcessorPaths>
+                            <path>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok</artifactId>
+                                <version>${lombok.version}</version>
+                            </path>
+                            <path>
+                                <groupId>org.projectlombok</groupId>
+                                <artifactId>lombok-mapstruct-binding</artifactId>
+                                <version>${lombok-mapstruct-binding.version}</version>
+                            </path>
+                            <path>
+                                <groupId>org.mapstruct</groupId>
+                                <artifactId>mapstruct-processor</artifactId>
+                                <version>${mapstruct.version}</version>
+                            </path>
+                        </annotationProcessorPaths>
+                        <compilerArgs>
+                            <compilerArg>-Amapstruct.defaultComponentModel=spring</compilerArg>
+                        </compilerArgs>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>${maven-enforcer-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>enforce-dependencies</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <bannedDependencies>
+                                    <!-- Only check direct dependencies, not transitive ones -->
+                                    <searchTransitive>false</searchTransitive>
+                                    <excludes>
+                                        <exclude>*:*</exclude>
+                                    </excludes>
+                                    <includes>
+                                        <!-- Internal modules -->
+                                        <include>ma.aza.afms.stations:common</include>
+                                        <include>ma.aza.afms.stations:api</include>
+                                        <include>ma.aza.afms.stations:collector</include>
+                                        <include>ma.aza.afms.stations:middleware</include>
+                                        <include>ma.aza.afms.stations:synchronizer</include>
+
+                                        <!-- Third-party dependencies -->
+                                        <include>org.mapstruct:mapstruct</include>
+                                        <include>org.mapstruct:mapstruct-processor</include>
+                                        <include>org.projectlombok:lombok</include>
+                                        <include>org.projectlombok:lombok-mapstruct-binding</include>
+                                        <include>org.springdoc:springdoc-openapi-starter-webmvc-ui</include>
+                                        <include>org.flywaydb:flyway-core</include>
+                                        <include>org.flywaydb:flyway-database-postgresql</include>
+                                        <include>org.postgresql:postgresql</include>
+                                        <include>org.eclipse.paho:org.eclipse.paho.client.mqttv3</include>
+                                        <include>org.springframework.integration:spring-integration-mqtt</include>
+                                        <include>com.h2database:h2</include>
+
+                                        <!-- Add Hibernate Validator -->
+                                        <include>org.hibernate.validator:hibernate-validator</include>
+                                        <include>org.hibernate.validator:hibernate-validator-annotation-processor</include>
+
+                                        <!-- Spring Boot starters (no version needed as they're managed by Spring Boot parent) -->
+                                        <include>org.springframework.boot:spring-boot-starter</include>
+                                        <include>org.springframework.boot:spring-boot-starter-web</include>
+                                        <include>org.springframework.boot:spring-boot-starter-data-jpa</include>
+                                        <include>org.springframework.boot:spring-boot-starter-test</include>
+                                        <include>org.springframework.boot:spring-boot-devtools</include>
+                                        <include>org.springframework.boot:spring-boot-starter-websocket</include>
+                                        <include>org.springframework.boot:spring-boot-starter-oauth2-resource-server</include>
+                                        <include>org.springframework.boot:spring-boot-starter-security</include>
+
+                                        <!-- Spring Cloud (no version needed as they're managed by Spring Cloud BOM) -->
+                                        <include>org.springframework.cloud:spring-cloud-starter-openfeign</include>
+
+                                        <!-- Spring Framework modules (no version needed as they're managed by Spring Boot parent) -->
+                                        <include>org.springframework:spring-context</include>
+                                        <include>org.springframework.data:spring-data-jpa</include>
+                                        <include>jakarta.persistence:jakarta.persistence-api</include>
+                                        <include>com.fasterxml.jackson.core:jackson-annotations</include>
+                                    </includes>
+                                </bannedDependencies>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

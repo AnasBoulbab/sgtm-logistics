@@ -1,0 +1,18 @@
+package ma.aza.sgtm.logistics;
+
+import ma.aza.sgtm.logistics.config.RsaKeysConfig;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
+
+@SpringBootApplication
+@Configuration
+@EnableConfigurationProperties(RsaKeysConfig.class)
+public class ApiApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(ApiApplication.class, args);
+    }
+
+}

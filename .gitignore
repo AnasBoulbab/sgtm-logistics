@@ -1,0 +1,63 @@
+# ──────────────────────────────
+# Core language / build output
+# ──────────────────────────────
+# Java / Gradle
+.gradle/
+/build/
+/out/
+**/target/
+*.class
+*.jar
+*.war
+*.ear
+
+# Node / Next.js / React
+node_modules/
+.next/
+coverage/
+# lock‑files keep the exact versions – **do NOT ignore**
+
+# ──────────────────────────────
+# Tooling & IDEs
+# ──────────────────────────────
+# JetBrains / IntelliJ & IDEA
+.idea/
+*.iml
+# VS Code
+.vscode/
+# Eclipse
+.project
+.classpath
+.settings/
+
+# ──────────────────────────────
+# OS & Editor cruft
+# ──────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+
+# ──────────────────────────────
+# Docker / Compose
+# ──────────────────────────────
+.docker/
+**/Dockerfile.local
+**/compose.override.yml
+
+# Env & Secrets (sync sample files instead)
+middleware/.env
+**/.env
+.env.*
+!infrastructure/cloud/.env
+!infrastructure/edge/.env
+
+# Logs & runtime artefacts
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Misc
+*.orig
+*.patch

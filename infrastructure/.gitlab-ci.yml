@@ -1,0 +1,214 @@
+# ---------- Stages ----------
+stages:
+  - build
+  - test
+  - dockerize
+  - push
+  - deploy
+  # this for triggering the new images 
+
+# ---------- Workflow ( MR pipelines ) ----------
+workflow:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: always
+    - when: always
+
+# ---------- Shared config ----------
+variables:
+  IMAGE_NS: "petrosolutions"
+  IMAGE_TAG: "${CI_COMMIT_REF_SLUG}-${CI_PIPELINE_IID}"
+  DOCKER_BUILDKIT: "1"
+  DOCKER_TLS_CERTDIR: ""
+
+.docker_env: &docker_env
+  image: docker:25
+  services:
+    - name: docker:25-dind
+  variables:
+    DOCKER_HOST: tcp://docker:2375
+
+.login_tpl: &login
+  before_script:
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+
+# ---------- Paths ----------
+.paths_any_service: &paths_any_service
+  - api/**/*
+  - infrastructure/**/*
+  - web/**/*
+  - .gitlab-ci.yml
+
+# ---------- Rules templates ( dockerize/push  MR) ----------
+.rules_api: &rules_api
+  - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    when: never
+  - if: '$CI_COMMIT_BRANCH =~ /^(dev|main|prod)$/'
+    changes:
+      - api/**/*
+      - infrastructure/**/*
+      - .gitlab-ci.yml
+  - when: never
+
+.rules_web: &rules_web
+  - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    when: never
+  - if: '$CI_COMMIT_BRANCH =~ /^(dev|main|prod)$/'
+    changes:
+      - web/**/*
+      - .gitlab-ci.yml
+  - when: never
+
+# ---------- 1) Build ----------
+build_all:
+  stage: build
+  image: maven:3.9.6-eclipse-temurin-17-alpine
+  variables:
+    MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
+  cache:
+    key: "maven-${CI_COMMIT_REF_SLUG}"
+    paths: [".m2/repository"]
+  script:
+    - mvn -B -U clean install -DskipTests
+  rules:
+    # Gate  MR → prod
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "prod"'
+      when: on_success
+    #  branch pipelines 
+    - if: '$CI_COMMIT_BRANCH =~ /^(dev|main|prod)$/'
+      changes: *paths_any_service
+    - when: never
+
+# ---------- 1b) Build Web ( MR→prod branches   web) ----------
+web_build:
+  stage: build
+  image: node:20-alpine
+  script:
+    - cd web
+    - npm ci || npm install
+    - npm run build
+  cache:
+    key: "npm-${CI_COMMIT_REF_SLUG}"
+    paths:
+      - web/node_modules/
+  rules:
+    #  MR → prod.   
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "prod"'
+      changes:
+        - web/**/*
+      when: on_success
+    #  web
+    - if: '$CI_COMMIT_BRANCH =~ /^(dev|main|prod)$/'
+      changes:
+        - web/**/*
+    - when: never
+  needs: []
+
+# ---------- 2) Test (MR gate) ----------
+test_all:
+  stage: test
+  image: maven:3.9.6-eclipse-temurin-17-alpine
+  variables:
+    MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository"
+  cache:
+    key: "maven-${CI_COMMIT_REF_SLUG}"
+  needs: [build_all]
+  script:
+    - mvn -B -U test
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "prod"'
+      when: on_success
+    - when: never
+
+# 
+# web_test:
+#   stage: test
+#   image: node:20-alpine
+#   needs: [web_build]
+#   script:
+#     - cd web
+#     - npm test --if-present
+#   rules:
+#     - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "prod"'
+#       changes: [ "web/**/*" ]
+#       when: on_success
+#     - when: never
+
+# ---------- 3) Dockerize ----------
+dockerize_api:
+  stage: dockerize
+  <<: [ *docker_env, *login ]
+  needs: [build_all]
+  script:
+    - docker build -f api/Dockerfile -t "$IMAGE_NS/sgtm-logistics-api:$IMAGE_TAG" .
+    - docker push "$IMAGE_NS/sgtm-logistics-api:$IMAGE_TAG"
+  rules: *rules_api
+
+dockerize_web:
+  stage: dockerize
+  <<: [ *docker_env, *login ]
+  needs: [web_build]
+  script:
+    - set -a
+    - source infrastructure/cloud/.env
+    - set +a
+    - cd web
+    - docker build --build-arg WEB__SERVER_BASE_URL="${WEB__SERVER_BASE_URL}" --build-arg WEB__SERVER_PORT="${WEB__SERVER_PORT}" -t "$IMAGE_NS/sgtm-logistics-web:$IMAGE_TAG" .
+    - docker push "$IMAGE_NS/sgtm-logistics-web:$IMAGE_TAG"
+  rules: *rules_web
+
+# ---------- 4) Push (retag latest only  prod) ----------
+.push_tpl: &push_tpl
+  stage: push
+  <<: [ *docker_env, *login ]
+
+push_api:
+  <<: *push_tpl
+  rules: *rules_api
+  needs: [dockerize_api]
+  script:
+    - docker pull "$IMAGE_NS/sgtm-logistics-api:$IMAGE_TAG"
+    - |
+      if [ "$CI_COMMIT_REF_NAME" = "prod" ]; then
+        docker tag "$IMAGE_NS/sgtm-logistics-api:$IMAGE_TAG" "$IMAGE_NS/sgtm-logistics-api:latest"
+        docker push "$IMAGE_NS/sgtm-logistics-api:latest"
+      fi
+
+push_web:
+  <<: *push_tpl
+  rules: *rules_web
+  needs: [dockerize_web]
+  script:
+    - docker pull "$IMAGE_NS/sgtm-logistics-web:$IMAGE_TAG"
+    - |
+      if [ "$CI_COMMIT_REF_NAME" = "prod" ]; then
+        docker tag "$IMAGE_NS/sgtm-logistics-web:$IMAGE_TAG" "$IMAGE_NS/sgtm-logistics-web:latest"
+        docker push "$IMAGE_NS/sgtm-logistics-web:latest"
+      fi
+      
+deploy_cloud:
+  stage: deploy
+  image: alpine:3.20
+  variables:
+    DEPLOY_TARGET_DIR: "$CI_PROJECT_NAME"
+  before_script:
+    - apk add --no-cache openssh-client rsync
+    - eval "$(ssh-agent -s)"
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - ssh-keyscan "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+  script:
+    - PROJECT_DIR="${DEPLOY_TARGET_DIR:-$CI_PROJECT_NAME}"
+    - REMOTE_USER_HOST="${DEPLOY_USER}@${DEPLOY_HOST}"
+    - ssh "$REMOTE_USER_HOST" "cd ~ && mkdir -p \"$PROJECT_DIR\""
+    - rsync -avz infrastructure/cloud/docker-compose.yml infrastructure/cloud/.env infrastructure/cloud/mosquitto infrastructure/cloud/postgres "$REMOTE_USER_HOST:~/$PROJECT_DIR/"
+    - ssh "$REMOTE_USER_HOST" "echo \"$DOCKER_PASSWORD\" | docker login -u \"$DOCKER_USERNAME\" --password-stdin"
+    - ssh "$REMOTE_USER_HOST" "cd ~/$PROJECT_DIR && docker compose down --remove-orphans || true"
+    - ssh "$REMOTE_USER_HOST" "cd ~/$PROJECT_DIR && docker compose pull"
+    - ssh "$REMOTE_USER_HOST" "cd ~/$PROJECT_DIR && docker compose up -d"
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: never
+    - if: '$CI_COMMIT_BRANCH == "prod"'
+      when: on_success
+    - when: never
