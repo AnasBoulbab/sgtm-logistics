@@ -1,6 +1,7 @@
 package ma.aza.sgtm.logistics.clients;
 
-import ma.aza.sgtm.logistics.properties.GpswoxProperties;
+import ma.aza.sgtm.logistics.properties.GpsProviderProperties;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpStatusCodeException;
@@ -13,10 +14,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Service
-public class GpswoxClient {
-
-    private final RestTemplate restTemplate;
-    private final GpswoxProperties properties;
+@ConditionalOnProperty(prefix = "gps-provider", name = "name", havingValue = "gpswox")
+public class GpswoxClient extends BaseGpsClient {
 
     /**
      * This is the user_api_hash that MUST be sent as query param
@@ -27,9 +26,8 @@ public class GpswoxClient {
     // You can keep the login endpoint here or move to properties
     private static final String LOGIN_PATH = "/login"; // adjust to the real path
 
-    public GpswoxClient(RestTemplate restTemplate, GpswoxProperties properties) {
-        this.restTemplate = restTemplate;
-        this.properties = properties;
+    public GpswoxClient(RestTemplate restTemplate, GpsProviderProperties properties) {
+        super(restTemplate, properties);
     }
 
     // ---------------- AUTH ----------------
@@ -40,18 +38,18 @@ public class GpswoxClient {
         }
 
         // 1) Prefer value from configuration (copied from UI)
-        if (properties.getUserApiHash() != null && !properties.getUserApiHash().isBlank()) {
-            this.userApiHash = properties.getUserApiHash();
+        if (properties().getUserApiHash() != null && !properties().getUserApiHash().isBlank()) {
+            this.userApiHash = properties().getUserApiHash();
             return;
         }
 
         // 2) Otherwise, login via API to get user_api_hash in response body
-        if (properties.getEmail() == null || properties.getPassword() == null) {
+        if (properties().getEmail() == null || properties().getPassword() == null) {
             throw new IllegalStateException("GPSWOX user_api_hash not configured and no login credentials provided");
         }
 
         String loginUrl = UriComponentsBuilder
-                .fromHttpUrl(properties.getBaseUrl())
+                .fromHttpUrl(properties().getBaseUrl())
                 .path(LOGIN_PATH)
                 .toUriString();
 
@@ -60,13 +58,13 @@ public class GpswoxClient {
 
         // If docs say form-url-encoded, change this to MultiValueMap<String,String>
         Map<String, String> loginBody = Map.of(
-                "email", properties.getEmail(),
-                "password", properties.getPassword()
+                "email", properties().getEmail(),
+                "password", properties().getPassword()
         );
 
         HttpEntity<Map<String, String>> entity = new HttpEntity<>(loginBody, headers);
 
-        ResponseEntity<Map> response = restTemplate.exchange(
+        ResponseEntity<Map> response = getRestTemplate().exchange(
                 loginUrl,
                 HttpMethod.POST,
                 entity,
@@ -96,9 +94,7 @@ public class GpswoxClient {
     ) {
         ensureUserApiHash();
 
-        UriComponentsBuilder builder = UriComponentsBuilder
-                .fromHttpUrl(properties.getBaseUrl())
-                .path(relativePath);
+        UriComponentsBuilder builder = baseUriBuilder(relativePath);
 
         // Add user_api_hash to ALL requests
         builder.queryParam("user_api_hash", userApiHash);
@@ -122,7 +118,7 @@ public class GpswoxClient {
         HttpEntity<Object> entity = new HttpEntity<>(body, headers);
 
         try {
-            return restTemplate.exchange(uri, method, entity, responseType);
+            return getRestTemplate().exchange(uri, method, entity, responseType);
         } catch (HttpStatusCodeException ex) {
             return ResponseEntity
                     .status(ex.getStatusCode())

@@ -5,9 +5,10 @@ import lombok.extern.slf4j.Slf4j;
 import ma.aza.sgtm.logistics.dtos.DeviceDto;
 import ma.aza.sgtm.logistics.entities.DayReport;
 import ma.aza.sgtm.logistics.entities.Vehicle;
+import ma.aza.sgtm.logistics.properties.GpsProviderProperties;
 import ma.aza.sgtm.logistics.repositories.DayReportRepository;
 import ma.aza.sgtm.logistics.repositories.VehicleRepository;
-import ma.aza.sgtm.logistics.services.GpswoxService;
+import ma.aza.sgtm.logistics.services.GPSService;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -21,13 +22,14 @@ import java.util.List;
 @Slf4j
 public class SynchronizationService {
 
-    private final GpswoxService gpswoxService;
+    private final GPSService gpsService;
     private final VehicleRepository vehicleRepository;
     private final DayReportRepository dayReportRepository;
+    private final GpsProviderProperties gpsProviderProperties;
 
-    @Scheduled(cron = "${synchronization.cron.devices:0 0 1 * * *}")
+    @Scheduled(cron = "#{@synchronizationProperties.cron.devices}")
     public void syncDevices() {
-        List<DeviceDto> remoteDevices = gpswoxService.getDevices();
+        List<DeviceDto> remoteDevices = gpsService.getDevices();
         if (remoteDevices.isEmpty()) {
             log.info("No devices found to sync");
             return;
@@ -37,14 +39,14 @@ public class SynchronizationService {
             Vehicle vehicle = vehicleRepository.findByExternalId(deviceDto.getId())
                     .orElseGet(() -> Vehicle.builder()
                             .externalId(deviceDto.getId())
-                            .code("GPSWOX-" + deviceDto.getId())
-                            .source("GPSWOX")
+                            .code(buildExternalCode(deviceDto.getId()))
+                            .source(gpsProviderProperties.getName())
                             .build());
 
             vehicle.setName(deviceDto.getName());
             vehicle.setExternalId(deviceDto.getId());
             if (vehicle.getCode() == null) {
-                vehicle.setCode("GPSWOX-" + deviceDto.getId());
+                vehicle.setCode(buildExternalCode(deviceDto.getId()));
             }
 
             vehicleRepository.save(vehicle);
@@ -53,7 +55,7 @@ public class SynchronizationService {
         log.info("Completed device synchronization. Devices processed: {}", remoteDevices.size());
     }
 
-    @Scheduled(cron = "${synchronization.cron.day-report:0 5 0 * * *}")
+    @Scheduled(cron = "#{@synchronizationProperties.cron.dayReport}")
     public void syncPreviousDayReports() {
         LocalDate targetDate = LocalDate.now().minusDays(1);
         syncDayReportsForDate(targetDate);
@@ -69,7 +71,7 @@ public class SynchronizationService {
                 continue;
             }
             try {
-                String engineHours = gpswoxService.getEngineHours(vehicle.getExternalId(), from, to);
+                String engineHours = gpsService.getEngineHours(vehicle.getExternalId(), from, to);
                 DayReport dayReport = dayReportRepository.findByVehicleIdAndDate(vehicle.getId(), date)
                         .orElseGet(() -> DayReport.builder()
                                 .vehicle(vehicle)
@@ -81,5 +83,9 @@ public class SynchronizationService {
                 log.warn("Failed to sync day report for vehicle {} on {}: {}", vehicle.getId(), date, ex.getMessage());
             }
         }
+    }
+
+    private String buildExternalCode(Long deviceId) {
+        return gpsProviderProperties.getName().toUpperCase() + "-" + deviceId;
     }
 }

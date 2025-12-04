@@ -18,12 +18,8 @@ spring:
     baselineOnMigrate: true
     locations: classpath:db/migration/dev
 
-traccar:
-  base-url: http://194.147.58.41:8082/api
-  email: anas@aza.ma
-  password: 123456789
-
-gpswox:
+gps-provider:
+  name: gpswox
   base-url: https://app.aza-gps.ma/api
   email: anas@aza.ma
   password: iiVcVbe99t8j
