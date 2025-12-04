@@ -19,5 +19,6 @@ public class VehicleDto {
     private LocalDateTime updatedAt;
     private String name;
     private String code;
+    private Long externalId;
     private VehicleType type;
 }

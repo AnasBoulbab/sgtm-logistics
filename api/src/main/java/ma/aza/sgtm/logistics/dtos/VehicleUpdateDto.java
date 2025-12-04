@@ -14,5 +14,6 @@ public class VehicleUpdateDto {
 
     private String name;
     private String code;
+    private Long externalId;
     private VehicleType type;
 }
