@@ -1,4 +1,4 @@
-package ma.aza.sgtm.logistics.services;
+package ma.aza.sgtm.logistics.schedulers;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -7,6 +7,7 @@ import ma.aza.sgtm.logistics.entities.DayReport;
 import ma.aza.sgtm.logistics.entities.Vehicle;
 import ma.aza.sgtm.logistics.repositories.DayReportRepository;
 import ma.aza.sgtm.logistics.repositories.VehicleRepository;
+import ma.aza.sgtm.logistics.services.GpswoxService;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -18,17 +19,17 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class GpswoxSyncService {
+public class SynchronizationService {
 
     private final GpswoxService gpswoxService;
     private final VehicleRepository vehicleRepository;
     private final DayReportRepository dayReportRepository;
 
-    @Scheduled(cron = "${gpswox.sync.devices.cron:0 0 1 * * *}")
+    @Scheduled(cron = "${synchronization.cron.devices:0 0 1 * * *}")
     public void syncDevices() {
         List<DeviceDto> remoteDevices = gpswoxService.getDevices();
         if (remoteDevices.isEmpty()) {
-            log.info("No GPSWOX devices found to sync");
+            log.info("No devices found to sync");
             return;
         }
 
@@ -37,6 +38,7 @@ public class GpswoxSyncService {
                     .orElseGet(() -> Vehicle.builder()
                             .externalId(deviceDto.getId())
                             .code("GPSWOX-" + deviceDto.getId())
+                            .source("GPSWOX")
                             .build());
 
             vehicle.setName(deviceDto.getName());
@@ -48,10 +50,10 @@ public class GpswoxSyncService {
             vehicleRepository.save(vehicle);
         });
 
-        log.info("Completed GPSWOX device synchronization. Devices processed: {}", remoteDevices.size());
+        log.info("Completed device synchronization. Devices processed: {}", remoteDevices.size());
     }
 
-    @Scheduled(cron = "${gpswox.sync.day-report.cron:0 5 0 * * *}")
+    @Scheduled(cron = "${synchronization.cron.day-report:0 5 0 * * *}")
     public void syncPreviousDayReports() {
         LocalDate targetDate = LocalDate.now().minusDays(1);
         syncDayReportsForDate(targetDate);
