@@ -26,7 +26,13 @@ public class TraccarService implements GPSService {
 
     @Override
     public List<DeviceDto> getDevices() {
-        ResponseEntity<ma.aza.sgtm.logistics.records.DeviceDto[]> backendResponse = traccarClient.exchange(HttpMethod.GET, "/devices", null, ma.aza.sgtm.logistics.records.DeviceDto[].class, null);
+        ResponseEntity<ma.aza.sgtm.logistics.records.DeviceDto[]> backendResponse = traccarClient.exchange(
+                HttpMethod.GET,
+                "/devices",
+                null,
+                null,
+                ma.aza.sgtm.logistics.records.DeviceDto[].class
+        );
         if (!backendResponse.getStatusCode().is2xxSuccessful()) {
             return List.of();
         }
@@ -56,7 +62,13 @@ public class TraccarService implements GPSService {
         if (from != null) queryParams.put("from", from.toString());
         if (to != null) queryParams.put("to", to.toString());
         if (id != null) queryParams.put("id", String.valueOf(deviceId));
-        ResponseEntity<PositionDto[]> backendResponse = traccarClient.exchange(HttpMethod.GET, "/positions", null, PositionDto[].class, queryParams);
+        ResponseEntity<PositionDto[]> backendResponse = traccarClient.exchange(
+                HttpMethod.GET,
+                "/positions",
+                queryParams,
+                null,
+                PositionDto[].class
+        );
         if (!backendResponse.getStatusCode().is2xxSuccessful()) {
             return List.of();
         }

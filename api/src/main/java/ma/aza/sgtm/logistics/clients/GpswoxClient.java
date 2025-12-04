@@ -2,9 +2,12 @@ package ma.aza.sgtm.logistics.clients;
 
 import ma.aza.sgtm.logistics.properties.GpsProviderProperties;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.http.*;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -83,48 +86,10 @@ public class GpswoxClient extends BaseGpsClient {
         this.userApiHash = String.valueOf(body.get("user_api_hash"));
     }
 
-    // ---------------- GENERIC EXCHANGE ----------------
-
-    public <T> ResponseEntity<T> exchange(
-            HttpMethod method,
-            String relativePath,
-            Map<String, ?> queryParams,
-            Object body,
-            Class<T> responseType
-    ) {
+    @Override
+    protected void authenticate(HttpHeaders headers, UriComponentsBuilder uriBuilder) {
         ensureUserApiHash();
-
-        UriComponentsBuilder builder = baseUriBuilder(relativePath);
-
-        // Add user_api_hash to ALL requests
-        builder.queryParam("user_api_hash", userApiHash);
-
-        // Add other query params
-        if (queryParams != null) {
-            queryParams.forEach((k, v) -> {
-                if (v != null && !"user_api_hash".equals(k)) { // avoid duplicates
-                    builder.queryParam(k, v);
-                }
-            });
-        }
-
-        URI uri = builder.build(true).toUri(); // true -> encode
-
-        HttpHeaders headers = new HttpHeaders();
-        if (method == HttpMethod.POST || method == HttpMethod.PUT || method == HttpMethod.PATCH) {
-            headers.setContentType(MediaType.APPLICATION_JSON);
-        }
-
-        HttpEntity<Object> entity = new HttpEntity<>(body, headers);
-
-        try {
-            return getRestTemplate().exchange(uri, method, entity, responseType);
-        } catch (HttpStatusCodeException ex) {
-            return ResponseEntity
-                    .status(ex.getStatusCode())
-                    .headers(ex.getResponseHeaders() != null ? ex.getResponseHeaders() : new HttpHeaders())
-                    .body(null);
-        }
+        uriBuilder.queryParam("user_api_hash", userApiHash);
     }
 
     // ---------------- CONVENIENCE METHODS ----------------
