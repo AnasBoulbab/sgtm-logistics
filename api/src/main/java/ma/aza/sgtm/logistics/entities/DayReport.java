@@ -10,6 +10,7 @@ import ma.aza.sgtm.logistics.enums.VehicleState;
 import java.time.LocalDate;
 
 @Entity
+@Table(name = "day_report", uniqueConstraints = @UniqueConstraint(columnNames = {"vehicle_id", "date"}))
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -20,7 +21,6 @@ public class DayReport {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true)
     private LocalDate date;
     private VehicleState state;
     private String workHours;

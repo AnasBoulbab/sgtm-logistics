@@ -30,6 +30,8 @@ public class Vehicle {
     private String name;
     @Column(unique = true)
     private String code;
+    @Column(unique = true)
+    private Long externalId;
     private VehicleType type;
 
     @OneToMany(mappedBy = "vehicle")
