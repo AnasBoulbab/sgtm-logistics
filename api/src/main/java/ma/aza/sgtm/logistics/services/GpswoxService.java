@@ -9,6 +9,7 @@ import ma.aza.sgtm.logistics.records.DateTimeRange;
 import ma.aza.sgtm.logistics.records.DeviceGroup;
 import ma.aza.sgtm.logistics.records.GetHistoryResponse;
 import ma.aza.sgtm.logistics.utils.DateUtil;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -20,10 +21,12 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class GpswoxService {
+@ConditionalOnProperty(prefix = "gps-provider", name = "name", havingValue = "gpswox")
+public class GpswoxService implements GPSService {
 
     private final GpswoxClient gpswoxClient;
 
+    @Override
     public List<DeviceDto> getDevices() {
         // Call your client
         ResponseEntity<DeviceGroup[]> response =
@@ -52,6 +55,7 @@ public class GpswoxService {
         return result;
     }
 
+    @Override
     public String getEngineHours(Long id, LocalDateTime from, LocalDateTime to) {
 
         ResponseEntity<GetHistoryResponse> response = gpswoxClient.getHistory(id, from, to, GetHistoryResponse.class);
@@ -69,6 +73,7 @@ public class GpswoxService {
         return body.engineHours();
     }
 
+    @Override
     public List<DeviceDailyHours> getDeviceDailyHours(LocalDateTime from, LocalDateTime to) {
 
         List<DeviceDto> devices = getDevices();

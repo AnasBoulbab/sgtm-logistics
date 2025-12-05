@@ -1,9 +1,10 @@
 package ma.aza.sgtm.logistics.controllers;
 
 import lombok.RequiredArgsConstructor;
-import ma.aza.sgtm.logistics.clients.TraccarClient;
 import ma.aza.sgtm.logistics.records.ApiResponse;
 import ma.aza.sgtm.logistics.records.DeviceDto;
+import ma.aza.sgtm.logistics.services.GPSService;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,16 +14,19 @@ import java.util.List;
 @RestController
 @RequestMapping("/traccar")
 @RequiredArgsConstructor
+@ConditionalOnProperty(prefix = "gps-provider", name = "name", havingValue = "traccar")
 public class TraccarController {
 
-    private final TraccarClient traccarClient;
+    private final GPSService gpsService;
 
     @GetMapping("/devices")
     public ResponseEntity<ApiResponse<List<DeviceDto>>> getDevices() {
 
         // Call remote API generically
         ResponseEntity<DeviceDto[]> backendResponse =
-                traccarClient.exchange(HttpMethod.GET, "/devices", null, DeviceDto[].class, null);
+                ResponseEntity.ok(gpsService.getDevices().stream()
+                        .map(device -> new ma.aza.sgtm.logistics.records.DeviceDto(device.getId().intValue(), device.getName(), null, null, null))
+                        .toArray(ma.aza.sgtm.logistics.records.DeviceDto[]::new));
 
         if (!backendResponse.getStatusCode().is2xxSuccessful()) {
             // Propagate status code, wrap error
@@ -41,17 +45,6 @@ public class TraccarController {
 
     @PostMapping("/some-resource")
     public ResponseEntity<ApiResponse<DeviceDto>> createSomething(@RequestBody DeviceDto requestDto) {
-        ResponseEntity<DeviceDto> backendResponse =
-                traccarClient.exchange(HttpMethod.POST, "/some-resource", requestDto, DeviceDto.class, null);
-
-        if (!backendResponse.getStatusCode().is2xxSuccessful()) {
-            return ResponseEntity
-                    .status(backendResponse.getStatusCode())
-                    .body(ApiResponse.error("Failed to create resource on remote server"));
-        }
-
-        return ResponseEntity
-                .status(backendResponse.getStatusCode()) // e.g. 201 CREATED if remote returns it
-                .body(ApiResponse.ok(backendResponse.getBody()));
+        throw new UnsupportedOperationException("Creating resources is not supported through the generic GPSService");
     }
 }
