@@ -1,8 +1,10 @@
 package ma.aza.sgtm.logistics.mappers;
 
+import ma.aza.sgtm.logistics.dtos.DayReportDto;
 import ma.aza.sgtm.logistics.dtos.VehicleCreateDto;
 import ma.aza.sgtm.logistics.dtos.VehicleDto;
 import ma.aza.sgtm.logistics.dtos.VehicleUpdateDto;
+import ma.aza.sgtm.logistics.dtos.VehicleWithDayReportsDto;
 import ma.aza.sgtm.logistics.entities.Vehicle;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingTarget;
@@ -19,4 +21,6 @@ public interface VehicleMapper {
     List<VehicleDto> toDtoList(List<Vehicle> entities);
 
     void updateFromDto(VehicleUpdateDto dto, @MappingTarget Vehicle entity);
+
+    VehicleWithDayReportsDto toDtoWithDayReports(Vehicle entity, List<DayReportDto> dayReports);
 }

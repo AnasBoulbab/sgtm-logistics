@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import ma.aza.sgtm.logistics.dtos.VehicleCreateDto;
 import ma.aza.sgtm.logistics.dtos.VehicleDto;
 import ma.aza.sgtm.logistics.dtos.VehicleUpdateDto;
+import ma.aza.sgtm.logistics.dtos.VehicleWithDayReportsDto;
 import ma.aza.sgtm.logistics.entities.Vehicle;
 import ma.aza.sgtm.logistics.enums.VehicleType;
 import ma.aza.sgtm.logistics.services.VehicleService;
@@ -13,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -66,6 +68,14 @@ public class VehicleController {
                 .and(VehicleSpecifications.updatedAtFrom(updatedAtFrom))
                 .and(VehicleSpecifications.updatedAtTo(updatedAtTo));
         return service.search(spec, pageable);
+    }
+
+    @GetMapping("/with-day-reports")
+    public Page<VehicleWithDayReportsDto> getVehiclesWithDayReports(
+            @RequestParam(required = false) LocalDate from,
+            @RequestParam(required = false) LocalDate to,
+            Pageable pageable) {
+        return service.getVehiclesWithDayReports(from, to, pageable);
     }
 
     @DeleteMapping("/{id}")
