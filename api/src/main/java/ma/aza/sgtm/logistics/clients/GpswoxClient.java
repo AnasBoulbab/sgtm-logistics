@@ -1,6 +1,7 @@
 package ma.aza.sgtm.logistics.clients;
 
 import ma.aza.sgtm.logistics.properties.GpsProviderProperties;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -29,7 +30,7 @@ public class GpswoxClient extends BaseGpsClient {
     // You can keep the login endpoint here or move to properties
     private static final String LOGIN_PATH = "/login"; // adjust to the real path
 
-    public GpswoxClient(RestTemplate restTemplate, GpsProviderProperties properties) {
+    public GpswoxClient(RestTemplate restTemplate, @Qualifier("gpsProviderProperties") GpsProviderProperties properties) {
         super(restTemplate, properties);
     }
 

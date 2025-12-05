@@ -62,8 +62,9 @@ public class SynchronizationService {
     }
 
     public void syncDayReportsForDate(LocalDate date) {
+
         LocalDateTime from = date.atStartOfDay();
-        LocalDateTime to = date.atTime(LocalTime.MAX);
+        LocalDateTime to = date.atTime(LocalTime.MAX).withNano(0);
 
         List<Vehicle> vehicles = vehicleRepository.findAll();
         for (Vehicle vehicle : vehicles) {

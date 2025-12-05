@@ -14,10 +14,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
-@RequestMapping("/gpswox")
+@RequestMapping("/proxy")
 @RequiredArgsConstructor
-@ConditionalOnProperty(prefix = "gps-provider", name = "name", havingValue = "gpswox")
-public class GpswoxController {
+public class ProxyController {
 
     private final GPSService gpsService;
 

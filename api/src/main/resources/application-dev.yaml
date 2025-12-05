@@ -24,6 +24,12 @@ gps-provider:
   email: anas@aza.ma
   password: iiVcVbe99t8j
 
+#gps-provider:
+#  name: traccar
+#  base-url: http://194.147.58.41:8082/api
+#  email: anas@aza.ma
+#  password: 123456789
+
 synchronization:
   cron:
     devices: 0 0 1 * * *

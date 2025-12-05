@@ -9,8 +9,7 @@ import java.util.List;
 public interface GPSService {
 
     List<DeviceDto> getDevices();
-
     String getEngineHours(Long id, LocalDateTime from, LocalDateTime to);
-
     List<DeviceDailyHours> getDeviceDailyHours(LocalDateTime from, LocalDateTime to);
+
 }

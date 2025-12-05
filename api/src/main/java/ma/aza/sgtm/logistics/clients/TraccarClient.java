@@ -1,6 +1,7 @@
 package ma.aza.sgtm.logistics.clients;
 
 import ma.aza.sgtm.logistics.properties.GpsProviderProperties;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -18,7 +19,7 @@ import java.net.URI;
 @ConditionalOnProperty(prefix = "gps-provider", name = "name", havingValue = "traccar")
 public class TraccarClient extends BaseGpsClient {
 
-    public TraccarClient(RestTemplate restTemplate, GpsProviderProperties traccarProperties) {
+    public TraccarClient(RestTemplate restTemplate, @Qualifier("gpsProviderProperties") GpsProviderProperties traccarProperties) {
         super(restTemplate, traccarProperties);
     }
 
