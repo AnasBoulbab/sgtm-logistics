@@ -1,5 +1,9 @@
 package ma.aza.sgtm.logistics.controllers;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -20,6 +24,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/auth")
+@Tag(name = "Authentication", description = "Endpoints for obtaining JWT access tokens")
 public class AuthController {
 
     private final JwtEncoder jwtEncoder;
@@ -32,7 +37,17 @@ public class AuthController {
     }
 
     @GetMapping("/login")
-    public Map<String, String> login(String username, String password){
+    @Operation(
+            summary = "Authenticate a user",
+            description = "Validates the provided credentials and returns a JWT access token.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Authentication succeeded"),
+                    @ApiResponse(responseCode = "401", description = "Authentication failed")
+            }
+    )
+    public Map<String, String> login(
+            @Parameter(description = "Username of the account") String username,
+            @Parameter(description = "Password of the account") String password){
 
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(username, password)
