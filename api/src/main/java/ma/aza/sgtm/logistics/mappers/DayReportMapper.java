@@ -24,7 +24,6 @@ public interface DayReportMapper {
 
     List<DayReportDto> toDtoList(List<DayReport> entities);
 
-    @Mapping(target = "vehicle", source = "vehicleId", qualifiedByName = "vehicleFromId")
     void updateFromDto(DayReportUpdateDto dto, @MappingTarget DayReport entity);
 
     @Named("vehicleFromId")

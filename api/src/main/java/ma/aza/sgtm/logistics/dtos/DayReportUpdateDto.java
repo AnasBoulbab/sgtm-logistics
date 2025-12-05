@@ -13,9 +13,5 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 public class DayReportUpdateDto {
-
-    private LocalDate date;
     private VehicleState state;
-    private String workHours;
-    private Long vehicleId;
 }

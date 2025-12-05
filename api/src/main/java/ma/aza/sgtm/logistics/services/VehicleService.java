@@ -4,6 +4,8 @@ import lombok.RequiredArgsConstructor;
 import ma.aza.sgtm.logistics.dtos.VehicleCreateDto;
 import ma.aza.sgtm.logistics.dtos.VehicleDto;
 import ma.aza.sgtm.logistics.dtos.VehicleUpdateDto;
+import ma.aza.sgtm.logistics.dtos.VehicleWithDayReportsDto;
+import ma.aza.sgtm.logistics.entities.DayReport;
 import ma.aza.sgtm.logistics.entities.Vehicle;
 import ma.aza.sgtm.logistics.mappers.VehicleMapper;
 import ma.aza.sgtm.logistics.repositories.VehicleRepository;
@@ -12,6 +14,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -20,6 +23,7 @@ public class VehicleService {
 
     private final VehicleRepository vehicleRepository;
     private final VehicleMapper mapper;
+    private final DayReportService dayReportService;
 
     public VehicleDto create(VehicleCreateDto vehicle) {
         Vehicle entity = mapper.toEntity(vehicle);
@@ -42,6 +46,14 @@ public class VehicleService {
 
     public Page<VehicleDto> search(Specification<Vehicle> specification, Pageable pageable) {
         return vehicleRepository.findAll(specification, pageable).map(mapper::toDto);
+    }
+
+    public Page<VehicleWithDayReportsDto> getVehiclesWithDayReports(LocalDate from, LocalDate to, Pageable pageable) {
+        return vehicleRepository.findAll(pageable).map( vehicle -> {
+            List<DayReport> dayReports = dayReportService.getAll(vehicle.getId(), from, to);
+            vehicle.setDayReports(dayReports);
+            return mapper.toDtoWithDayReports(vehicle);
+        } );
     }
 
     public void delete(Long id) {

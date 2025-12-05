@@ -13,7 +13,6 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 public class DayReportDto {
-
     private Long id;
     private LocalDate date;
     private VehicleState state;

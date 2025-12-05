@@ -7,11 +7,13 @@ import ma.aza.sgtm.logistics.dtos.DayReportUpdateDto;
 import ma.aza.sgtm.logistics.entities.DayReport;
 import ma.aza.sgtm.logistics.mappers.DayReportMapper;
 import ma.aza.sgtm.logistics.repositories.DayReportRepository;
+import ma.aza.sgtm.logistics.specifications.DayReportSpecifications;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -38,6 +40,16 @@ public class DayReportService {
 
     public List<DayReportDto> getAll() {
         return mapper.toDtoList(dayReportRepository.findAll());
+    }
+
+    public List<DayReport> getAll(Long vehicleId, LocalDate from, LocalDate to) {
+        Specification<DayReport> spec = Specification
+                .allOf(
+                        DayReportSpecifications.hasVehicleId(vehicleId),
+                        DayReportSpecifications.dateFrom(from),
+                        DayReportSpecifications.dateTo(to)
+                );
+        return dayReportRepository.findAll(spec);
     }
 
     public Page<DayReportDto> search(Specification<DayReport> specification, Pageable pageable) {

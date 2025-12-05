@@ -58,4 +58,5 @@ public class VehicleSpecifications {
         return (root, query, cb) ->
                 to == null ? null : cb.lessThanOrEqualTo(root.get("updatedAt"), to);
     }
+
 }
